@@ -1,0 +1,6 @@
+# ignore file/directory
+.env
+__pycache__
+
+
+# un-ignore file/directory
