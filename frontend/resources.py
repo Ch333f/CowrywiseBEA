@@ -1,8 +1,8 @@
 from flask_restx import Resource, Namespace, fields
 from flask import request, jsonify, make_response
+import requests
 
 from datetime import datetime, timedelta, timezone
-import requests
 
 from dbmodel import db, User, Book, BooksBorrowed
 
@@ -24,7 +24,7 @@ sign_up_form = user.model(
 book_model = user.model(
     "Book",
     {
-        'id': fields.Integer(required=True),
+        'id': fields.Integer(),
         'title': fields.String(required=True),
         'author': fields.String(required=True),
         'publisher': fields.String(required=True),
@@ -60,7 +60,7 @@ class SignUp(Resource):
     )
     def post(self):
         """
-        Enroll users into the library using their firstname, lastname and email
+        Enroll users into the library using their email, firstname and lastname.
         """
         form_data = request.json
         user = User(
@@ -130,7 +130,7 @@ class Books(Resource):
     "/books/<int:id>",
     methods=["GET", "POST"],
 )
-class Book(Resource):
+class Book_(Resource):
     @user.marshal_list_with(book_model)
     def get(self, id):
         """
@@ -145,7 +145,7 @@ class Book(Resource):
     )
     def post(self, id):
         """
-        Borrow a book by its id
+        Borrow books by id (specify how long you want it for in days)
         """
         form_data = request.json
         book = Book.query.get_or_404(id)
@@ -156,7 +156,7 @@ class Book(Resource):
             )
 
         borrowed_book = BooksBorrowed(
-            book_id=book.book_id,
+            book_id=book.id,
             user_id=form_data.get("borrower"),
             return_date= (
                 datetime.now(timezone.utc)
@@ -168,6 +168,12 @@ class Book(Resource):
 
         db.session.add(borrowed_book)
         db.session.commit()
+
+        # notify admin service
+        requests.post(
+            f'{admin_service}/books/{book.id}',
+            json=form_data,
+        )
 
         return make_response(
             jsonify({'message': "Book borrowed successfully"}), 200
@@ -182,12 +188,12 @@ class FilterBooks(Resource):
     @user.marshal_list_with(book_model)
     def get(self, keyword):
         """
-        Filter books either by publisher or by category
+        Filter books by publishers eg Wiley, Apress, Manning and by category eg fiction, technology, science
         """
         return (
             Book.query
                 .filter(
-                    (Book.publisher == keyword) or (Book.category == keyword)
+                    (Book.publisher == keyword) | (Book.category == keyword)
                 )
                 .all()
         )
