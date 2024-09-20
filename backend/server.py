@@ -26,6 +26,7 @@ api.add_namespace(admin)
 
 if __name__ == "__main__":
     cowrywisebea_app.run(
-        debug=True,
+        host="0.0.0.0",
         port=5001,
+        debug=True,
     )

@@ -25,4 +25,8 @@ cors.init_app(cowrywisebea_app)
 api.add_namespace(user)
 
 if __name__ == "__main__":
-    cowrywisebea_app.run(debug=True)
+    cowrywisebea_app.run(
+        host="0.0.0.0",
+        port=5000,
+        debug=True,
+    )
