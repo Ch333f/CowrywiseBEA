@@ -1,19 +1,39 @@
-version: '3.8'
 services:
   frontend:
-    build: ./frontend
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: frontend
     ports:
       - "5000:5000"
+    volumes:
+      - ./frontend:/app
     depends_on:
       # - redis
       - backend
+    environment:
+      - FLASK_ENV=development
 
   backend:
-    build: ./backend
+    build: 
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: backend
     ports:
       - "5001:5001"
     # depends_on:
     #   - redis
+    volumes:
+      - ./backend:/app
+    environment:
+      - FLASK_ENV=development
+
+  # testing:
+  #   build: .
+  #   command: pytest
+  #   depends_on:
+  #     - frontend
+  #     - backend
 
   # redis:
   #   image: "redis:alpine"
